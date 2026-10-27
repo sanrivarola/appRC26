@@ -15,6 +15,11 @@ class SubareaInventario extends Model
     protected $keyType      = 'int';
 
     protected $fillable = ['nombre', 'areapadre'];
+    
+    public function getRouteKeyName()
+    {
+        return 'id_subareasinventario';
+    }
 
     /* Relaciones */
     public function areaPadre()

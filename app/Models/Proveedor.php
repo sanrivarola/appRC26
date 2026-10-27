@@ -14,4 +14,16 @@ class Proveedor extends Model
         'area', 'nombre', 'datos', 'producto',
         'responsable', 'detalle', 'creador', 'fechacarga',
     ];
+
+    public function tareasProveedores()
+    {
+        return $this->hasMany(\App\Models\TareaProveedor::class, 'proveedor_id', 'id_proveedores');
+    }
+
+    public function calificacionPromedio(): ?float
+    {
+        return $this->tareasProveedores()
+            ->whereNotNull('calificacion')
+            ->avg('calificacion');
+    }
 }

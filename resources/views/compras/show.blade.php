@@ -22,6 +22,13 @@
                  class="px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">
                 Editar
               </a>
+              @if(!in_array($compra->estado, ['Compra realizada', 'Compra no realizada']))
+                <button type="button"
+                        onclick="document.getElementById('modalCancelarShow').classList.remove('hidden')"
+                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                  Cancelar compra
+                </button>
+              @endif
             @endrole
           </div>
         </div>
@@ -32,6 +39,12 @@
           <div>
             <div class="text-sm text-slate-500">Área del producto</div>
             <div class="mt-1 font-medium">{{ $compra->area->nombre ?? '—' }}</div>
+          </div>
+
+          {{-- Subárea --}}
+          <div>
+            <div class="text-sm text-slate-500">Subárea</div>
+            <div class="mt-1 font-medium">{{ $compra->subarea->nombre ?? '—' }}</div>
           </div>
 
           {{-- Proveedor --}}
@@ -119,8 +132,63 @@
           </div>
         </div>
 
+        {{-- Motivo de cancelación (si aplica) --}}
+        @if($compra->motivo_cancelacion)
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="text-sm font-semibold text-red-700 mb-1 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+              </svg>
+              Motivo de cancelación
+            </div>
+            <div class="text-sm text-red-800">{{ $compra->motivo_cancelacion }}</div>
+          </div>
+        @endif
+
       </div>
-      
+
+      {{-- MODAL CANCELAR (desde show) --}}
+      <div id="modalCancelarShow"
+           class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 hidden">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4">
+          <div class="flex items-center gap-3 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                 stroke="currentColor" class="size-6 text-red-500">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <h3 class="text-lg font-bold text-slate-800">Cancelar compra</h3>
+          </div>
+          <p class="text-sm text-slate-500 mb-4">
+            La compra pasará al historial como <span class="font-semibold text-red-600">no realizada</span>.
+            Esta acción no se puede deshacer.
+          </p>
+          <form method="POST" action="{{ route('compras.cancelar', $compra->id_compras) }}">
+            @csrf
+            @method('PUT')
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-slate-700 mb-1">
+                Motivo de cancelación <span class="text-red-500">*</span>
+              </label>
+              <textarea name="motivo_cancelacion" rows="3" required maxlength="1000"
+                        placeholder="Ej: Presupuesto insuficiente, producto ya no es necesario..."
+                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-red-400 focus:border-red-400 resize-none"></textarea>
+            </div>
+            <div class="flex gap-3 justify-end">
+              <button type="button"
+                      onclick="document.getElementById('modalCancelarShow').classList.add('hidden')"
+                      class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition text-sm font-semibold">
+                Volver
+              </button>
+              <button type="submit"
+                      class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold">
+                Sí, cancelar compra
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       {{-- HISTORIAL DE MOVIMIENTOS --}}
 <div class="mt-10">
   <h2 class="text-lg font-semibold text-slate-700 mb-3">

@@ -69,6 +69,19 @@
                         Horarios
                     </button>
                     <button
+                        type="button"
+                        onclick="location.href='{{ route('residencia.card') }}'"
+                        class="flex items-center gap-2 px-3 py-2 border border-indigo-500 text-indigo-500 rounded-md
+                            hover:bg-indigo-500 hover:text-white transition duration-150"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                        </svg>
+                        Guardia
+                    </button>
+                    <button
                             type="button"
                             onclick="location.href='{{ route('tareas.index') }}'"
                             class="flex items-center gap-2 px-3 py-2 border border-yellow-500 text-yellow-500 rounded-md
@@ -229,6 +242,19 @@
 
                         Horarios
                     </button>
+                <button
+                        type="button"
+                        onclick="location.href='{{ route('residencia.card') }}'"
+                        class="flex items-center gap-2 px-3 py-2 border border-indigo-500 text-indigo-500 rounded-md
+                            hover:bg-indigo-500 hover:text-white transition duration-150"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                        </svg>
+                        Guardia
+                </button>
                     <button
                         type="button"
                         onclick="location.href='{{ route('tareas.index') }}'"
@@ -293,7 +319,7 @@
                     </button>
                    <button
                         type="button"
-                        onclick="location.href='{{ route('tareas.index') }}'"
+                        onclick="location.href='{{ route('inventario.index') }}'"
                         class="flex items-center gap-2 px-3 py-2 border border-amber-600 text-amber-600 rounded-md
                             hover:bg-amber-600 hover:text-white transition duration-150"
                     > 
@@ -347,6 +373,19 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                     Horarios
+                </button>
+                <button
+                        type="button"
+                        onclick="location.href='{{ route('residencia.card') }}'"
+                        class="flex items-center gap-2 px-3 py-2 border border-indigo-500 text-indigo-500 rounded-md
+                            hover:bg-indigo-500 hover:text-white transition duration-150"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                        </svg>
+                        Guardia
                 </button>
                 <button
                         type="button"
@@ -419,7 +458,7 @@
                 </button>
                 <button
                         type="button"
-                        onclick="location.href='{{ route('proveedores.index') }}'"
+                        onclick="location.href='{{ route('tareas-proveedores.index') }}'"
                         class="flex items-center gap-2 px-3 py-2 border border-sky-600 text-sky-600 rounded-md
                             hover:bg-sky-600 hover:text-white transition duration-150"
                     >
@@ -475,6 +514,19 @@
                                   d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
                         </svg>
                         Horarios
+                </button>
+                <button
+                        type="button"
+                        onclick="location.href='{{ route('residencia.card') }}'"
+                        class="flex items-center gap-2 px-3 py-2 border border-indigo-500 text-indigo-500 rounded-md
+                            hover:bg-indigo-500 hover:text-white transition duration-150"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                        </svg>
+                        Guardia
                 </button>
                 <button
                         type="button"
@@ -571,6 +623,19 @@
                                   d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
                         </svg>
                         Horarios
+                </button>
+                <button
+                        type="button"
+                        onclick="location.href='{{ route('residencia.card') }}'"
+                        class="flex items-center gap-2 px-3 py-2 border border-indigo-500 text-indigo-500 rounded-md
+                            hover:bg-indigo-500 hover:text-white transition duration-150"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                        </svg>
+                        Guardia
                 </button>
                 <button
                         type="button"

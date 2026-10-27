@@ -8,6 +8,12 @@ use Illuminate\Http\Request;
 
 class SubareaInventarioController extends Controller
 {
+    
+    public function index()
+    {
+        return view('subareas.index');
+    }
+
     /* formulario de alta */
     public function create(Request $request)
     {
@@ -44,11 +50,13 @@ class SubareaInventarioController extends Controller
         $data = $request->validate([
             'nombre' => 'required|string|max:255',
         ]);
-
-    return redirect()
-        ->route('areas.index', ['open' => $subarea->areapadre])
-        ->with('success', 'Subárea actualizada.');
-        }
+    
+        $subarea->update($data);
+    
+        return redirect()
+            ->route('areas.index', ['open' => $subarea->areapadre])
+            ->with('success', 'Subárea actualizada.');
+    }
 
     /* eliminar subárea */
     public function destroy(SubareaInventario $subarea)

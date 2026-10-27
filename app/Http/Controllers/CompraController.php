@@ -6,6 +6,7 @@ use App\Models\{
     Compra,
     Inventario,
     AreaInventario,
+    SubareaInventario,
     ProveedorAdmin,
     HistorialInventario,
     CompraMovimiento
@@ -36,7 +37,7 @@ class CompraController extends Controller
         }
     
         // 2) Query base con filtros + orden
-        $base = Compra::with(['area','proveedor'])
+        $base = Compra::with(['area','subarea','proveedor'])
             ->when($request->search, fn($q,$s) => $q->where('producto','like',"%{$s}%"))
             ->when($request->prioridad, fn($q,$p) => $q->where('prioridad',$p))
             ->orderBy($sort, $direction);
@@ -65,16 +66,17 @@ class CompraController extends Controller
 
 
     /*────────────────────────────────────────────────────
-    |  “REALIZADAS”  (historial)
+    |  "REALIZADAS"  (historial)
     ────────────────────────────────────────────────────*/
     public function realizadas(Request $request)
     {
-        $query = Compra::with(['area','proveedor'])
-            ->where('estado', 'Compra realizada')
-            ->when($request->search,    fn($q,$s) => $q->where('producto','like',"%{$s}%"))
-            ->when($request->prioridad, fn($q,$p) => $q->where('prioridad',$p));
+        $query = Compra::with(['area','subarea','proveedor'])
+            ->whereIn('estado', ['Compra realizada', 'Compra no realizada'])
+            ->when($request->search,           fn($q,$s) => $q->where('producto','like',"%{$s}%"))
+            ->when($request->prioridad,        fn($q,$p) => $q->where('prioridad',$p))
+            ->when($request->estado_historial, fn($q,$e) => $q->where('estado',$e));
 
-        $compras = $query->orderByDesc('fechacompra')
+        $compras = $query->orderByDesc('archived_at')
                         ->paginate(20)
                         ->appends($request->query());
 
@@ -90,14 +92,27 @@ class CompraController extends Controller
     ────────────────────────────────────────────────────*/
     public function create(Request $request)
     {
+        $defaultAreaId = $request->input('area_id');
+    
         return view('compras.create', [
-            'areas'           => AreaInventario::orderBy('nombre')->pluck('nombre','id_areainventario'),
+            'areas'           => AreaInventario::with('subareas')->orderBy('nombre')->get(),
             'proveedores'     => ProveedorAdmin::orderBy('nombre')->pluck('nombre','id_proveedores'),
             'prioridades'     => ['Alta','Media','Baja'],
             'estados'         => ['Compra a realizar','Compra en proceso','Compra realizada'],
             'defaultProducto' => $request->input('producto'),
-            'defaultAreaId'   => $request->input('area_id'),
+            'defaultAreaId'   => $defaultAreaId,
         ]);
+    }
+    /*────────────────────────────────────────────────────
+    |  SUBAREAS POR AREA (AJAX)
+    ────────────────────────────────────────────────────*/
+    public function subareasPorArea(AreaInventario $area)
+    {
+        return response()->json(
+            SubareaInventario::where('areapadre', $area->id_areainventario)
+                ->orderBy('nombre')
+                ->pluck('nombre', 'id_subareasinventario')
+        );
     }
 
     /*────────────────────────────────────────────────────
@@ -107,6 +122,7 @@ class CompraController extends Controller
     {
         $rules = [
             'area_id'     => 'required|exists:area_inventarios,id_areainventario',
+            'subarea_id'  => 'required|exists:inventario_subareas,id_subareasinventario',
             'prioridad'   => 'required|in:Alta,Media,Baja',
             'producto'    => 'required|string', // LONGTEXT en DB
             'cantidad'    => 'required|integer|min:1',
@@ -157,7 +173,7 @@ class CompraController extends Controller
     ────────────────────────────────────────────────────*/
     public function show($id_compras)
     {
-        $compra = Compra::with(['area','proveedor','movimientos.user'])->findOrFail($id_compras);
+        $compra = Compra::with(['area','subarea','proveedor','movimientos.user'])->findOrFail($id_compras);
         return view('compras.show', compact('compra'));
     }
 
@@ -187,13 +203,12 @@ class CompraController extends Controller
     {
         return view('compras.edit', [
             'compra'       => $compra,
-            'areas'        => AreaInventario::orderBy('nombre')->pluck('nombre','id_areainventario'),
+            'areas'        => AreaInventario::with('subareas')->orderBy('nombre')->get(),
             'proveedores'  => ProveedorAdmin::orderBy('nombre')->pluck('nombre','id_proveedores'),
             'prioridades'  => ['Alta','Media','Baja'],
             'estados'      => ['Compra a realizar','Compra en proceso','Compra realizada'],
         ]);
     }
-
     /*────────────────────────────────────────────────────
     |  UPDATE  (redirige a inventario si transiciona a realizada)
     ────────────────────────────────────────────────────*/
@@ -201,6 +216,7 @@ class CompraController extends Controller
     {
         $data = $request->validate([
             'area_id'      => ['nullable','exists:area_inventarios,id_areainventario'],
+            'subarea_id'   => ['required','exists:inventario_subareas,id_subareasinventario'],
             'proveedor_id' => ['nullable','exists:proveedores_admin,id_proveedores'],
             'prioridad'    => ['required','in:Alta,Media,Baja'],
             'estado'       => ['required','in:Compra a realizar,Compra en proceso,Compra realizada'],
@@ -276,6 +292,39 @@ class CompraController extends Controller
     }
 
     /*────────────────────────────────────────────────────
+    |  CANCELAR (pasa a historial como "no realizada")
+    ────────────────────────────────────────────────────*/
+    public function cancelar(Request $request, $id)
+    {
+        $compra = Compra::findOrFail($id);
+
+        $request->validate([
+            'motivo_cancelacion' => 'required|string|max:1000',
+        ], [
+            'motivo_cancelacion.required' => 'El motivo de cancelación es obligatorio.',
+        ]);
+
+        DB::transaction(function () use ($request, $compra) {
+            $compra->update([
+                'estado'              => 'Compra no realizada',
+                'motivo_cancelacion'  => $request->motivo_cancelacion,
+                'archived_at'         => Carbon::now(),
+            ]);
+
+            CompraMovimiento::create([
+                'compra_id'  => $compra->getKey(),
+                'user_id'    => Auth::id(),
+                'accion'     => 'cancelada',
+                'cambios'    => json_encode(['estado' => ['anterior', 'Compra no realizada']], JSON_UNESCAPED_UNICODE),
+                'comentario' => $request->motivo_cancelacion,
+            ]);
+        });
+
+        return redirect()->route('compras.index')
+            ->with('success', 'Compra cancelada y enviada al historial.');
+    }
+
+    /*────────────────────────────────────────────────────
     |  DELETE
     ────────────────────────────────────────────────────*/
     public function destroy(Compra $compra)
@@ -290,15 +339,16 @@ class CompraController extends Controller
     protected function unificarConInventario(Compra $compra)
     {
         $inv = Inventario::firstOrNew([
-            'area_id'        => $compra->area_id,
-            'nombreproducto' => $compra->producto,
+            'area_id'            => $compra->area_id,
+            'subareainventario'  => $compra->subarea_id,
+            'nombreproducto'     => $compra->producto,
         ]);
-
+    
         $inv->cantidad     = (int) (($inv->cantidad ?? 0) + (int) $compra->cantidad);
         $inv->stockminimo  = $inv->stockminimo ?? 1;
         $inv->fechacarga   = now()->toDateString();
         $inv->save();
-
+    
         HistorialInventario::create([
             'producto_id'        => $inv->id_inventario,
             'tipo_operacion'     => 'entrada',
@@ -306,7 +356,7 @@ class CompraController extends Controller
             'equipo'             => $compra->responsable,
             'fecha'              => now()->toDateString(),
         ]);
-
+    
         return $inv;
     }
 }

@@ -10,7 +10,7 @@
         <div class="flex items-center justify-between">
           <h1 class="text-2xl font-semibold text-emerald-700">
             @if(($modo ?? 'pendientes') === 'realizadas')
-              Historial de compras realizadas
+              Historial de compras
             @else
               Compras pendientes
             @endif
@@ -75,6 +75,18 @@
             </select>
           </div>
 
+          @if(($modo ?? 'pendientes') === 'realizadas')
+          <div>
+            <label class="block text-sm">Estado</label>
+            <select name="estado_historial" class="border rounded pl-5 py-2"
+                    onchange="this.form.submit()">
+              <option value="">Todos</option>
+              <option value="Compra realizada"    @selected(request('estado_historial') === 'Compra realizada')>✅ Realizadas</option>
+              <option value="Compra no realizada" @selected(request('estado_historial') === 'Compra no realizada')>❌ No realizadas</option>
+            </select>
+          </div>
+          @endif
+
           <button class="ml-auto bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">
             Filtrar
           </button>
@@ -110,13 +122,31 @@
             <div class="mt-2">{{ $enProceso->links() }}</div>
           </section>
 
-        @else {{-- ═════════════ MODO “REALIZADAS” ═════════════ --}}
+        @else {{-- ═════════════ MODO "HISTORIAL" ═════════════ --}}
+
+          @php
+            $totalRealizadas = $compras->getCollection()->where('estado','Compra realizada')->count();
+            $totalCanceladas = $compras->getCollection()->where('estado','Compra no realizada')->count();
+          @endphp
+          <div class="flex gap-4 mb-2">
+            <div class="bg-green-50 border border-green-200 rounded-lg px-5 py-3 flex items-center gap-3">
+              <i class="fa-solid fa-circle-check text-green-600 text-lg"></i>
+              <div>
+                <div class="text-xs text-green-700 font-medium uppercase tracking-wide">Realizadas (pág.)</div>
+                <div class="text-2xl font-bold text-green-800">{{ $totalRealizadas }}</div>
+              </div>
+            </div>
+            <div class="bg-red-50 border border-red-200 rounded-lg px-5 py-3 flex items-center gap-3">
+              <i class="fa-solid fa-circle-xmark text-red-500 text-lg"></i>
+              <div>
+                <div class="text-xs text-red-700 font-medium uppercase tracking-wide">No realizadas (pág.)</div>
+                <div class="text-2xl font-bold text-red-800">{{ $totalCanceladas }}</div>
+              </div>
+            </div>
+          </div>
 
           <section>
-            {!! view('compras._tabla', [
-                  'items' => $compras,
-                  'vacío' => 'No hay compras realizadas.'
-                ])->render() !!}
+            @include('compras._tabla_historial', ['compras' => $compras])
             <div class="mt-2">{{ $compras->links() }}</div>
           </section>
 

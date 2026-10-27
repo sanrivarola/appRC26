@@ -16,6 +16,7 @@ use App\Http\Controllers\CompraController;
 use App\Http\Controllers\PluviometroController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CompraLegacyController;
+use App\Http\Controllers\ResidenciaHorarioController;
 use App\Models\Mantenimiento;
 use Carbon\Carbon;
 
@@ -51,7 +52,7 @@ Route::middleware(['auth','role:admin'])->get('/admin', function () {
         ->count();
 
     return view('dashboard', compact('vencidos', 'porVencer'));
-})->name('dashboard');
+})->name('admin.dashboard'); // 👈 antes decía 'dashboard'
 
 /* Usuarios */
 Route::middleware(['auth','role:admin'])
@@ -149,12 +150,25 @@ Route::middleware(['auth'])
           Route::get ('/',               'index')->name('index');
           Route::get ('/create',         'create')->name('create');
           Route::post('/',               'store' )->name('store');
+
           Route::get ('/{relevamiento}','show'  )->name('show');
           Route::get ('/{relevamiento}/edit','edit')->name('edit');
           Route::put ('/{relevamiento}', 'update')->name('update');
           Route::delete('/{relevamiento}','destroy')->name('destroy');
 
-          Route::get ('/{relevamiento}/export','export')->name('export')->middleware('role:admin');
+          /* ARCHIVAR */
+          Route::patch(
+              '/{relevamiento}/archivar',
+              'toggleArchive'
+          )->name('archivar')
+           ->middleware('role:admin');
+
+          /* EXPORT PDF */
+          Route::get(
+              '/{relevamiento}/export',
+              'export'
+          )->name('export')
+           ->middleware('role:admin');
       });
 
 /*──────────────────  PROVEEDORES  (admin) ──────────────*/
@@ -175,6 +189,25 @@ Route::middleware(['auth','role:admin'])
 
           Route::get ('/export', 'export')->name('export');
       });
+
+/*──────────────────  TAREAS PROVEEDORES  ──────────────*/
+use App\Http\Controllers\TareaProveedorController;
+
+Route::middleware(['auth','role:admin|editor'])
+    ->prefix('tareas-proveedores')
+    ->name('tareas-proveedores.')
+    ->controller(TareaProveedorController::class)
+    ->group(function () {
+        Route::get ('/',                           'index'            )->name('index');
+        Route::get ('/create',                     'create'           )->name('create');
+        Route::post('/',                           'store'            )->name('store');
+        Route::get ('/{tareasProveedor}',          'show'             )->name('show');
+        Route::get ('/{tareasProveedor}/edit',     'edit'             )->name('edit');
+        Route::put ('/{tareasProveedor}',          'update'           )->name('update');
+        Route::delete('/{tareasProveedor}',        'destroy'          )->name('destroy');
+        Route::post('/{tareasProveedor}/devolucion','guardarDevolucion')->name('devolucion');
+        Route::post('/{tareasProveedor}/cerrar',   'cerrar'           )->name('cerrar');
+    });
 
 /*──────────────────  INVENTARIO ────────────────────────*/
 Route::middleware(['auth'])->group(function () {
@@ -215,42 +248,50 @@ Route::middleware(['auth','role:admin'])->group(function () {
     /* subáreas */
     Route::resource('subareas', SubareaInventarioController::class)->except(['show'])->names('subareas');
 
-    /* inventario CRUD */
-    Route::resource('inventario', InventarioController::class)
-         ->except(['index','show']);
+
 });
 
 /*──────────────────  COMPRAS  ─────────────────────────*/
 Route::middleware('auth')->group(function () {
 
-        /* ✅ listado de realizadas — debe ir ANTES del resource para evitar colisión */
-        Route::get('compras/realizadas', [CompraController::class,'realizadas'])
-             ->name('compras.realizadas');
-    
-        /* resource estándar */
-        Route::resource('compras', CompraController::class);
-    
-        Route::middleware('auth')->group(function () {
-    
-        // Historial de compras realizadas
-        Route::get('/compras/realizadas', [CompraController::class, 'realizadas'])
-             ->name('compras.realizadas');
-    
-        // CRUD /compras (resource) – deja esto tal como lo tenías
-        Route::resource('compras', CompraController::class);
-    });
+    // Listado de realizadas — debe ir ANTES del resource para evitar colisión
+    Route::get('compras/realizadas', [CompraController::class, 'realizadas'])
+         ->name('compras.realizadas');
+
+    // Subáreas por área (AJAX) — debe ir ANTES del resource por la misma razón
+    Route::get('compras/subareas/{area}', [CompraController::class, 'subareasPorArea'])
+         ->name('compras.subareas');
+
+    // CRUD /compras (resource)
+    Route::resource('compras', CompraController::class);
+
+    // Archivar / cancelar
+    Route::put('/compras/{id}/archivar', [CompraController::class, 'archivar'])
+         ->name('compras.archivar');
+
+    Route::put('/compras/{id}/cancelar', [CompraController::class, 'cancelar'])
+         ->name('compras.cancelar');
 });
 
-
 Route::get('/compras-legacy', [CompraLegacyController::class, 'index'])
-  ->name('compras.legacy.index')->middleware('auth');
+     ->name('compras.legacy.index')->middleware('auth');
 
 Route::get('/compras-legacy/{compra}', [CompraLegacyController::class, 'show'])
-  ->name('compras.legacy.show')->middleware('auth');
+     ->name('compras.legacy.show')->middleware('auth');
+     
+     
+/*──────────────────  RESIDENCIA HORARIO  ──────────────*/
 
-Route::put('/compras/{id}/archivar', [CompraController::class, 'archivar'])
-    ->name('compras.archivar')
-    ->middleware('auth');
+Route::middleware('auth')->group(function () {
+    Route::get ('/residencia',         [ResidenciaHorarioController::class, 'card'   ])->name('residencia.card');
+    Route::post('/residencia/ingreso', [ResidenciaHorarioController::class, 'ingreso'])->name('residencia.ingreso');
+    Route::post('/residencia/egreso',  [ResidenciaHorarioController::class, 'egreso' ])->name('residencia.egreso');
+});
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/residencia/admin',  [ResidenciaHorarioController::class, 'index' ])->name('residencia.index');
+    Route::get('/residencia/export', [ResidenciaHorarioController::class, 'export'])->name('residencia.export');
+});
 
 /*──────────────────  PLUVIÓMETRO  ─────────────────────*/
 Route::middleware('auth')

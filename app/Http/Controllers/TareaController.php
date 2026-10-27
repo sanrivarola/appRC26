@@ -8,6 +8,7 @@ use App\Models\DevolucionTarea;
 use App\Exports\TareasExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DevolucionesExport;
 use Carbon\Carbon;
@@ -89,11 +90,11 @@ class TareaController extends Controller
     }
 
     /**
-     * (Nuevo) Formulario de export: pasa $equipos a la vista que pegaste.
+     * Formulario de export: pasa $equipos a la vista.
      */
     public function exportForm(Request $request)
     {
-        // Combo de equipos desde devoluciontareas
+        // Combo de equipos desde devoluciontareas (incluye históricos)
         $equipos = DevolucionTarea::query()
             ->whereNotNull('equipo')
             ->where('equipo', '!=', '')
@@ -112,7 +113,7 @@ class TareaController extends Controller
                 'equipo'      => 'nullable|string',
             ]);
 
-            $desde = $data['fecha_desde']; // es DATE, no hace falta startOfDay
+            $desde = $data['fecha_desde'];
             $hasta = $data['fecha_hasta'];
 
             $equipo = $request->input('equipo', 'todos');
@@ -127,7 +128,6 @@ class TareaController extends Controller
             $preview = $q->paginate(25)->withQueryString();
         }
 
-        // Vista única para formulario + (opcional) tabla preview
         return view('tareas.export', compact('equipos', 'preview', 'total'));
     }
 
@@ -143,20 +143,18 @@ class TareaController extends Controller
             'equipo'           => 'nullable|string',
             'solo_finalizadas' => 'nullable|boolean',
         ]);
-    
+
         $desde  = $data['fecha_desde'];   // formato YYYY-MM-DD
         $hasta  = $data['fecha_hasta'];   // formato YYYY-MM-DD
         $equipo = $request->input('equipo', 'todos') ?: 'todos';
         $solo   = $request->boolean('solo_finalizadas');
-    
+
         // Partes del nombre de archivo
         $equipoSlug = $equipo !== 'todos' ? '_' . Str::slug($equipo, '_') : '';
         $soloSlug   = $solo ? '_solo_finalizadas' : '';
-    
-        // ✅ ahora sí existe $filename
+
         $filename = "devoluciones_{$desde}_{$hasta}{$equipoSlug}{$soloSlug}.xlsx";
-    
-        // Export que solo incluye: Fecha, Tarea, Devolucion, Finalizada (según tu clase DevolucionesExport)
+
         return Excel::download(
             new DevolucionesExport($desde, $hasta, $equipo, $solo),
             $filename
@@ -169,7 +167,6 @@ class TareaController extends Controller
      */
     private function baseExportQuery(string $desde, string $hasta, string $equipo)
     {
-        // Usamos Eloquent Builder (necesario para FromQuery de Laravel-Excel)
         $q = DevolucionTarea::query()
             ->from('devoluciontareas as d')
             ->join('tareas as t', 'd.id_tarea', '=', 't.id_tarea')
@@ -193,9 +190,6 @@ class TareaController extends Controller
 
         return $q;
     }
-    
-    
-    // 
 
     public function createExtra($id_tarea)
     {
@@ -266,7 +260,9 @@ class TareaController extends Controller
 
     public function create()
     {
-        return view('tareas.create');
+        $responsables = $this->equiposActivos();
+
+        return view('tareas.create', compact('responsables'));
     }
 
     public function store(Request $request)
@@ -274,7 +270,7 @@ class TareaController extends Controller
         $validated = $request->validate([
             'tarea'        => 'required|string|max:255',
             'detalle'      => 'required|string',
-            'equipo'       => 'required|string',
+            'equipo'       => ['required', 'string', Rule::in($this->equiposActivos()->all())],
             'prioridad'    => 'required|in:Alta,Media,Baja',
             'estado'       => 'required|in:1,2,3',
             'lunes'        => 'nullable|in:si',
@@ -371,18 +367,20 @@ class TareaController extends Controller
 
     public function edit($id_tarea)
     {
-        $tarea = Tarea::findOrFail($id_tarea);
-        return view('tareas.edit', compact('tarea'));
+        $tarea        = Tarea::findOrFail($id_tarea);
+        $responsables = $this->equiposActivos();
+
+        return view('tareas.edit', compact('tarea', 'responsables'));
     }
 
     public function update(Request $request, $id_tarea)
     {
         $tarea = Tarea::findOrFail($id_tarea);
-    
+
         $validated = $request->validate([
             'tarea'        => 'required|string|max:255',
             'detalle'      => 'nullable|string',
-            'equipo'       => 'required|string|max:255',
+            'equipo'       => ['required', 'string', 'max:255', Rule::in($this->equiposActivos()->all())],
             'prioridad'    => 'required|in:Alta,Media,Baja',
             'estado'       => 'required|integer|in:1,2,3',
             'lunes'        => 'nullable|in:si',
@@ -399,14 +397,14 @@ class TareaController extends Controller
             'link2'        => 'nullable|url',
             'link3'        => 'nullable|url',
         ]);
-    
+
         // Normaliza los días desmarcados a "no"
         foreach (['lunes','martes','miercoles','jueves','viernes','sabado','domingo','norepite'] as $d) {
             $validated[$d] = $validated[$d] ?? 'no';
         }
-    
+
         $tarea->update($validated);
-    
+
         return redirect()->route('tareas.index')->with('success', 'Tarea actualizada correctamente');
     }
 
@@ -417,11 +415,15 @@ class TareaController extends Controller
         return redirect()->route('tareas.index')->with('success', 'Tarea eliminada correctamente');
     }
 
+    /**
+     * Usuarios activos que pueden ser responsables de una tarea (desde la BD).
+     */
     private function equiposActivos()
     {
         return User::where('activo', true)
             ->whereHas('roles', fn ($q) => $q->whereIn('name', ['admin', 'editor', 'colaborador']))
             ->whereDoesntHave('roles', fn ($q) => $q->where('name', 'superadmin'))
+            ->where('name', '!=', 'Superadmin')
             ->orderBy('name')
             ->pluck('name');
     }

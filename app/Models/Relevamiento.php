@@ -10,12 +10,20 @@ class Relevamiento extends Model
 {
     use HasFactory;
 
-    /* ─────────────────────────  Config básicos  ───────────────────── */
-    protected $table      = 'relevamiento';      // nombre de la tabla
-    protected $primaryKey = 'id_relevamiento';
-    public    $timestamps = false;                // la tabla no tiene created_at/updated_at
+    /* ─────────────────────────  CONFIG  ───────────────────────── */
 
-    /* Campos que se pueden asignar en masa (create / update) */
+    protected $table = 'relevamiento';
+
+    protected $primaryKey = 'id_relevamiento';
+
+    public $timestamps = false;
+
+    protected $keyType = 'int';
+
+    public $incrementing = true;
+
+    /* ─────────────────────────  MASS ASSIGNMENT  ───────────────── */
+
     protected $fillable = [
         'equipo',
         'titulorelevamiento',
@@ -25,35 +33,74 @@ class Relevamiento extends Model
         'fechacarga',
     ];
 
-    /* Cast: que ‘fechacarga’ sea instancia de Carbon */
+    /* ─────────────────────────  CASTS  ─────────────────────────── */
+
     protected $casts = [
         'fechacarga' => 'date',
     ];
 
-    /* ─────────────────────────  Accessors  ────────────────────────── */
+    /* ─────────────────────────  APPENDS  ───────────────────────── */
+
+    protected $appends = [
+        'foto1_url',
+    ];
+
+    /* ─────────────────────────  ROUTE MODEL BINDING  ───────────── */
+
+    public function getRouteKeyName()
+    {
+        return 'id_relevamiento';
+    }
+
+    /* ─────────────────────────  ACCESSORS  ─────────────────────── */
 
     /**
-     * url pública de la foto (devuelve null si no hay imagen)
+     * URL pública de la imagen
      */
     public function getFoto1UrlAttribute(): ?string
     {
-        return $this->foto1
-            ? Storage::disk('public')->url('relevamientos/'.$this->foto1)
-            : null;
+        if (!$this->foto1) {
+            return null;
+        }
+
+        return Storage::disk('public')
+            ->url('relevamientos/' . $this->foto1);
     }
 
-    /* Al serializar a JSON/array se agrega foto1_url automáticamente  */
-    protected $appends = ['foto1_url'];
+    /**
+     * Saber si está archivado
+     */
+    public function getIsArchivedAttribute(): bool
+    {
+        return $this->archivar === 'si';
+    }
 
-    /* ─────────────────────────  Scopes útiles  ────────────────────── */
+    /* ─────────────────────────  SCOPES  ────────────────────────── */
 
     /**
-     * Scope para filtrar por rango de fechas (inclusive)
-     *
-     * Relevamiento::between($from,$to)->get();
+     * Filtrar por rango de fechas
      */
     public function scopeBetween($query, $from, $to)
     {
-        return $query->whereBetween('fechacarga', [$from, $to]);
+        return $query->whereBetween(
+            'fechacarga',
+            [$from, $to]
+        );
+    }
+
+    /**
+     * Sólo activos
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('archivar', 'no');
+    }
+
+    /**
+     * Sólo archivados
+     */
+    public function scopeArchived($query)
+    {
+        return $query->where('archivar', 'si');
     }
 }

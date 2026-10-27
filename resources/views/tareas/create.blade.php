@@ -35,7 +35,7 @@
                             <label class="block font-medium mb-1">Responsable</label>
                             <select name="equipo" class="w-full border rounded p-2" required>
                                 <option value="" disabled selected>Seleccionar responsable</option>
-                                @foreach(['Andres','Belen','Elisa','Ezequiel','Jessica','Nahuel','Laura'] as $person)
+                                @foreach($responsables as $person)
                                     <option value="{{ $person }}" @selected(old('equipo')==$person)>{{ $person }}</option>
                                 @endforeach
                             </select>

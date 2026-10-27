@@ -3,6 +3,40 @@
         <x-sidebar />
 
         <main class="flex-1 bg-gray-50 min-h-screen md:ml-64 p-4 md:p-8 transition-all duration-300">
+            <!---->
+<div
+    x-data="{ visible: localStorage.getItem('aviso_dashboard') !== 'cerrado' }"
+    x-show="visible"
+    class="bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 rounded-lg mb-4"
+>
+    <div class="flex justify-between items-start">
+        <div>
+            <h3 class="font-bold">
+                📢 Aviso general
+            </h3>
+
+            <p class="mt-1">
+                Las imágenes de los relevamientos ya están funcionando bien 😊  
+                Les pido si pueden revisar desde sus cuentas los registros que hayan subido.  
+                Si ven algo raro o que no les cierre, escríbanme sin problema.  
+
+                ¡Gracias! 💛  
+                Sandra
+            </p>
+        </div>
+
+        <button
+            @click="
+                visible = false;
+                localStorage.setItem('aviso_dashboard', 'cerrado');
+            "
+            class="text-amber-700 hover:text-amber-900 text-xl leading-none"
+        >
+            ×
+        </button>
+    </div>
+</div>
+            <!---->
  <x-alerta-mantenimiento :vencidos="$vencidos" :porVencer="$porVencer" />
             <div class="max-w-6xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                
@@ -48,6 +82,30 @@
                     </div>
                     <span class="ml-auto">
                         <svg class="h-5 w-5 text-gray-400 group-hover:text-orange-600 transition" fill="none"
+                             stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </span>
+                </a>
+
+                {{-- Residencia --}}
+                <a href="{{ route('residencia.card') }}"
+                   class="group bg-white shadow rounded-2xl p-6 flex items-center gap-4 flex-nowrap
+                          hover:shadow-lg hover:-translate-y-1 transition-all
+                          border border-transparent hover:border-indigo-300">
+                    <div class="flex-shrink-0 bg-indigo-50 rounded-full p-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="size-6 text-indigo-500">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-indigo-500 group-hover:text-indigo-700">Residencia</h3>
+                        <p class="text-sm text-gray-500">Registro de ingreso y egreso de residencia</p>
+                    </div>
+                    <span class="ml-auto">
+                        <svg class="h-5 w-5 text-gray-400 group-hover:text-indigo-600 transition" fill="none"
                              stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>

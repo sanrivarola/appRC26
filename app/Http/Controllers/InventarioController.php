@@ -31,7 +31,8 @@ class InventarioController extends Controller
         }
 
         // Filtro por subárea (tu columna se llama subareainventario)
-        $subareaId = $request->input('subareainventario');
+        $subareaId = $request->input('subarea_id');
+        
         if ($subareaId) {
             $query->where('subareainventario', $subareaId);
         }

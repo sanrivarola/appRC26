@@ -38,15 +38,11 @@
                         {!! nl2br(e($relevamiento->detallerelevamiento)) !!}
                     </div>
 
-                    @if ($relevamiento->foto1)
-                        <div>
-                            <img src="{{ asset('storage/relevamientos/'.$relevamiento->foto1) }}"
-     alt="Foto relevamiento"
-     class="rounded-xl max-h-[480px] object-contain mx-auto">
-
-
-                        </div>
-                    @endif
+@if ($relevamiento->foto1)
+    <img src="/app/storage/relevamientos/{{ $relevamiento->foto1 }}"
+         alt="Foto relevamiento"
+         class="rounded-xl max-h-[480px] object-contain mx-auto">
+@endif
 
                     {{-- acciones --}}
                     <div class="flex gap-3 pt-4 border-t">

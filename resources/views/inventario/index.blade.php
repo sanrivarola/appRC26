@@ -45,8 +45,12 @@
                            class="border rounded px-3 py-1 flex-1" />
 
                     {{-- Área --}}
-                    <select name="area_id" class="border rounded px-3 py-1"
-                            onchange="this.form.submit()">
+                    <select name="area_id"
+                            class="border rounded px-3 py-1"
+                            onchange="
+                                this.form.subarea_id.value='';
+                                this.form.submit();
+                            ">
                         <option value="">Todas las áreas</option>
                         @foreach($areas as $a)
                             <option value="{{ $a->id_areainventario }}"

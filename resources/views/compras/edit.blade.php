@@ -23,25 +23,52 @@
 
         {{-- FORMULARIO --}}
         <form action="{{ route('compras.update', $compra->id_compras) }}"
-              method="POST" class="space-y-6">
+              method="POST"
+              class="space-y-6"
+              x-data="{
+                area: '{{ old('area_id', $compra->area_id) }}',
+                subarea: '{{ old('subarea_id', $compra->subarea_id) }}',
+                subareas: @js(
+                    $areas->flatMap(fn($a) => $a->subareas->map(fn($s) => [
+                        'id'   => $s->id_subareasinventario,
+                        'name' => $s->nombre,
+                        'area' => $a->id_areainventario,
+                    ]))->values()
+                )
+              }">
           @csrf
           @method('PUT')
 
           {{-- ÁREA ---------------------------------------------------------- --}}
           <div>
             <label class="block mb-1 font-semibold">Área del producto</label>
-            <select name="area_id"
+            <select x-model="area"
+                    @change="subarea = ''"
+                    name="area_id"
                     class="w-full border rounded px-3 py-2"
                     required>
               <option value="">— Seleccionar área —</option>
-              @foreach($areas as $id => $nombre)
-                <option value="{{ $id }}"
-                        @selected(old('area_id', $compra->area_id)==$id)>
-                  {{ $nombre }}
+              @foreach($areas as $a)
+                <option value="{{ $a->id_areainventario }}">
+                  {{ $a->nombre }}
                 </option>
               @endforeach
             </select>
           </div>
+
+        {{-- SUBÁREA -------------------------------------------------------- --}}
+        <div>
+          <label class="block mb-1 font-semibold">Subárea</label>
+          <select x-model="subarea"
+                  name="subarea_id"
+                  class="w-full border rounded px-3 py-2"
+                  required>
+            <option value="">— Seleccionar subárea —</option>
+            <template x-for="opt in subareas.filter(s => s.area == area)" :key="opt.id">
+              <option :value="opt.id" :selected="opt.id == subarea" x-text="opt.name"></option>
+            </template>
+          </select>
+        </div>
 
           {{-- PROVEEDOR (solo admin / editor) ------------------------------ --}}
           @role('admin|editor')
@@ -132,7 +159,7 @@
                    class="w-full border rounded px-3 py-2"
                    required>
           </div>
-          
+
           <input type="hidden" name="fechacarga"
        value="{{ old('fechacarga', optional($compra->fechacarga)->format('Y-m-d')) }}">
 

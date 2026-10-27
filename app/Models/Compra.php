@@ -33,6 +33,7 @@ class Compra extends Model
     --------------------------------------------------------------*/
     protected $fillable = [
         'area_id',
+        'subarea_id',
         'proveedor_id',
         'prioridad',
         'producto',
@@ -42,7 +43,8 @@ class Compra extends Model
         'estado',
         'fechacarga',
         'fechacompra',
-        'archived_at',   // ⬅️ agregar para poder setearlo en update()
+        'archived_at',
+        'motivo_cancelacion',
     ];
 
     /*--------------------------------------------------------------
@@ -63,6 +65,15 @@ class Compra extends Model
             AreaInventario::class,
             'area_id',
             'id_areainventario'
+        );
+    }
+
+    public function subarea()
+    {
+        return $this->belongsTo(
+            SubareaInventario::class,
+            'subarea_id',
+            'id_subareasinventario'
         );
     }
 

@@ -11,6 +11,11 @@ class DashboardController extends Controller
     public function show()
     {
         $user = Auth::user();
+
+        if ($user->hasRole('visitante') && $user->roles->count() === 1) {
+            return redirect()->route('residencia.card');
+        }
+
         $rol = $user->getRoleNames()->first(); // admin, editor, colaborador
         $hoy = Carbon::today();
 
